@@ -1,5 +1,5 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, Menu, remote} = require('electron')
 const path = require('path')
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -11,10 +11,16 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+	transparent: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
-    }
+    },
+	//frame: false
   })
+  
+  //mainWindow.webContents.openDevTools()
+  mainWindow.setMenu(null)
+  mainWindow.setResizable(false)
 
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')
@@ -29,6 +35,61 @@ function createWindow () {
     // when you should delete the corresponding element.
     mainWindow = null
   })
+  
+  var menu = Menu.buildFromTemplate([
+      {
+          label: 'Menu',
+          submenu: [
+              {label:'Adjust Notification Value'},
+              {label:'CoinMarketCap'},
+              {label:'Exit'}
+          ]
+      }
+  ])
+  Menu.setApplicationMenu(menu); 
+  
+  
+
+mainWindow.webContents.on('context-menu', (e, props) => {
+    const InputMenu = Menu.buildFromTemplate([{
+        label: 'Undo',
+        role: 'undo',
+    }, {
+        label: 'Redo',
+        role: 'redo',
+    }, {
+        type: 'separator',
+    }, {
+        label: 'Cut',
+        role: 'cut',
+    }, {
+        label: 'Copy',
+        role: 'copy',
+    }, {
+        label: 'Paste',
+        role: 'paste',
+    }, {
+        type: 'separator',
+    }, {
+        label: 'Select all',
+        role: 'selectall',
+    },
+    ]);
+    /*const { inputFieldType } = props;
+    if (inputFieldType === 'plainText') {
+      InputMenu.popup(mainWindow);
+    }*/
+	
+	const { inputFieldType, selectionText, isEditable } = props;
+    if (inputFieldType || isEditable) {
+      InputMenu.popup(mainWindow);
+    } else if (selectionText && selectionText.trim() !== '') {
+      selectionMenu.popup(mainWindow);
+    }
+	
+	
+  });
+  
 }
 
 // This method will be called when Electron has finished
